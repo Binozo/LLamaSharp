@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using LLama.Unittest.Tools;
 
 namespace LLama.Tools;
@@ -14,7 +15,8 @@ public sealed class Tool
     
     public List<ToolParameter> Arguments { get; init; }
 
-    private object? _contextClass;
+    private readonly Delegate _delegate;
+    private readonly object? _contextClass;
     
     public Tool(Delegate callable)
     {
@@ -60,10 +62,17 @@ public sealed class Tool
                 Required = parameterRequired,
             });
         }
+
+        _delegate = callable;
     }
     
     public Tool(Delegate callable, object? contextClass) : this(callable)
     {
         _contextClass = contextClass;
+    }
+
+    public Task<string> Invoke(object?[]? parameters)
+    {
+        return (Task<string>)_delegate.Method.Invoke(_contextClass, parameters);
     }
 }
